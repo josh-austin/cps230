@@ -62,7 +62,7 @@ draw_xy proc
 	mul bx
 	push ax
 	
-	; Clear EAX (probably unnecessary but I felt paranoid while writing this)
+	; Clear EAX
 	mov eax, 0
 	
 	; Take X, divide by 8, put the quotient in DI
@@ -75,7 +75,7 @@ draw_xy proc
 	pop bx
 	add di, bx
 	
-	; Set the bit mask with the remainder; clear AX and put in AL
+	; Set the bit mask with the remainder; put in AX
 	mov cx, dx
 	add cx, 1
 	mov ax, 1
