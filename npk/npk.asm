@@ -13,22 +13,7 @@ TITLE Non-Preemptive Kernel (npk.asm)
 	description byte "Description: Just another non-preemptive kernel proof-of-concept", 0
 	authors     byte "Authors:     Ashley Lane, Cameron Thacker, Joshua Austin", 0
 	
-	stack_segment_low word 0FFFFh
-	stack_main_segment word ?
-	
 	registered_functions byte 0
-	
-	demoproc1intro byte "'demoproc1' is waking up", 0
-	demoproc1extro byte "'demoproc1' is going to sleep", 0
-	
-	demoproc2intro byte "'demoproc2' is waking up", 0
-	demoproc2extro byte "'demoproc2' is going to sleep", 0
-	
-	demoproc3intro byte "'demoproc3' is waking up", 0
-	demoproc3extro byte "'demoproc3' is going to sleep", 0
-	
-	demoproc4intro byte "'demoproc4' is waking up", 0
-	demoproc4extro byte "'demoproc4' is going to sleep", 0
 	
 	yield byte "NPK_YIELD", 0
 
@@ -230,20 +215,32 @@ demoproc2 endp
 ;  Returns: Nothing
 ; Clobbers: Nothing
 npk_register_function proc
-	; Register the current function's address into the previous function's stack segment
-	sub stack_segment_low, 0100h
-	mov ss, stack_segment_low
-	push ax
 	
-	; Register the first function's address into the current function's stack segment
-	;mov ss, 00000FEFFh
-	pop ax
-	push ax
-	mov ss, stack_segment_low
-	push ax
-	
-	; Let's go back to the main runner's stack segment, shall we?
-	mov ss, stack_main_segment
+    mov [temp_ebx], ebx
+    
+    mov ebx, offset cabinet 
+    
+    size_of_cabinet equ sizeof cabinet        
+    
+    offset_eax equ 0
+    offset_ebx equ 4
+    offset_ecx equ 8
+    offset_edx equ 12
+    offset_esp equ 16
+    
+    mov [bx + offset_eax], eax
+    mov eax, [temp_ebx]
+    mov [bx + offset_ebx], eax
+    mov [bx + offset_ecx], ecx
+    mov [bx + offset_edx], edx
+    
+    mov bx, [low_stack_section]
+    sub bx, 100h
+    mov [low_stack_section], bx
+    mov ss:[bx], ax
+    
+    mov [offset_esp + bx], ax
+    
 	ret
 npk_register_function endp
 
