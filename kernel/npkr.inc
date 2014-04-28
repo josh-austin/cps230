@@ -1,4 +1,8 @@
 include irvine16.inc
+.data
+	cabinet  dword 256 dup(0) 
+	temp_ebx dword ?
+	low_stack_section word 0FFFFh
 
 .code
 
@@ -9,31 +13,23 @@ include irvine16.inc
 ; Clobbers: Nothing
 npk_register proc
 	pushad
-	
-	jmp AFTER_REGISTER_DATA
-	
-	cabinet  dword 256 dup(0) 
-	temp_ebx dword ?
-	low_stack_section word 0FFFFh
-	
-AFTER_REGISTER_DATA:
+	pushfd
 
 	mov [temp_ebx], ebx
     
-    mov ebx, offset cabinet 
-    call DumpRegs
+    mov ebx, offset cabinet
+	
     size_of_cabinet equ sizeof cabinet    
 
     offset_eax equ 0
-    offset_ebx equ 32
-    offset_ecx equ 64
-    offset_edx equ 96
-    offset_esp equ 128
+    offset_ebx equ 4
+    offset_ecx equ 8
+    offset_edx equ 12
+    offset_esp equ 16
+	offset_flags equ 20
 	
 	; STEP 1:
-    ; If this is not the first register ever, then set the latest registered
-    ; context's ESP to what you're registering.  Otherwise let it point to itself(?) since it will be changed later
-	mov [size_of_cabinet + bx + offset_esp], ax
+    mov [bx + offset_esp], esp
 
 	
 	; STEP 2:
@@ -46,11 +42,14 @@ AFTER_REGISTER_DATA:
     mov [bx + offset_ebx], eax
     mov [bx + offset_ecx], ecx
     mov [bx + offset_edx], edx
+	
+	pop eax
+	mov [bx + offset_flags], eax
     
 	; STEP 3:
     ; Subtract 100h from low_stack_section
-    mov bx, [low_stack_section]
-    sub bx, 100h
+    movzx ebx, [low_stack_section]
+    sub ebx, 100h
 	
 	mov [temp_ebx], ebx
 	
@@ -58,10 +57,8 @@ AFTER_REGISTER_DATA:
     mov [low_stack_section], bx
     mov ss:[bx], ax
 	
-	mov ebx, [temp_ebx]
-    mov [size_of_cabinet + bx + offset_esp], ax
-	COMMENT ~
-	~
+    mov [size_of_cabinet + ebx + offset_esp], ebx
+	
     popad
     ret
 

@@ -1,6 +1,8 @@
 ;include irvine16.inc
 include npkr.inc
 
+.stack 4096
+
 .data
 .code
 
@@ -17,7 +19,11 @@ runtest proc
 	mov edx, 0deadbeefh
 	call DumpRegs
 	
-	call npk_register	
+	call npk_register
+
+	mov eax, [cabinet + 12]
+	mov ebx, [cabinet + 16]
+	
 	call DumpRegs
     
 	exit
