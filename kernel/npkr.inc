@@ -1,5 +1,6 @@
 include irvine16.inc
 .data
+	cabinet_index byte 0
 	cabinet  dword 256 dup(0) 
 	temp_ebx dword ?
 	low_stack_section word 0FFFFh
@@ -33,9 +34,7 @@ npk_register proc
 
 	
 	; STEP 2:
-    ; Registration!  While you're at it, set our newly-registered context's
-    ; ESP to the offset of the first-ever registered function
-    ; so we have a nice looping construction (function 1 -> function 2 -> function 3 -> function 1 again...)
+    ; Registration!
     
     mov [bx + offset_eax], eax
     mov eax, [temp_ebx]
@@ -58,6 +57,10 @@ npk_register proc
     mov ss:[bx], ax
 	
     mov [size_of_cabinet + ebx + offset_esp], ebx
+	
+	mov al, [cabinet_index]
+	inc al
+	mov [cabinet_index], al
 	
     popad
     ret

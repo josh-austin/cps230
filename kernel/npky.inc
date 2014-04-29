@@ -1,23 +1,23 @@
+include irvine16.inc
+
+.data
+
 .code
 
-; Function: Saves current context and swaps to the next context in the looped chain
+; Function: Saves current context and swaps to the next "cabinet drawer" context
 ; Receives: Nothing
 ; Requires: Nothing
 ;  Returns: Nothing
 ; Clobbers: Nothing
 npk_yield proc
     
-    ; STEP 1: save the current ESP, which is the return address of the next function we want to run
+    ; STEP 1: iterate to the next cabinet "drawer" unless we are at cabinet_index, in which case we go back to the first
     
     ; STEP 2:
-    ; Subtract 100h from current_seg if it is not equal to low_stack_seg.
-    ; Otherwise set current_seg to 0FEFFh
+    ; Context swap!
     
     ; STEP 3:
-    ; Point to the appropriate context using low_stack_seg to find the offset and load it
-    
-    ; STEP 4:
-    ; Put the ESP, which was the return addr of the next function, which we saved earlier and push it to the top of the stack...
+    ; Put the ESP, which is the return addr of the next function we want to run, and push it to the top of the stack...
     ret ; ...and then this will start the next function
 
 npk_yield endp
