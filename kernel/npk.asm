@@ -20,14 +20,27 @@ offset_flags equ 20
 .code
 
 tweedledee proc
-	;call DumpRegs
-	; TODO: delay 1 second
+	call DumpRegs
+	push cx
+		; Pause for 2 seconds so the viewer can read the output
+		mov cx, 0Fh
+		mov dx, 4240h
+		mov ah, 86h
+		int 15h
+		pop cx
+		
 	call npk_yield
 tweedledee endp
 
 tweedledum proc
-	;call DumpRegs
-	; TODO: delay 1 second
+	call DumpRegs
+	push cx
+		; Pause for 2 seconds so the viewer can read the output
+		mov cx, 0Fh
+		mov dx, 4240h
+		mov ah, 86h
+		int 15h
+		pop cx
 	call npk_yield
 tweedledum endp
 
@@ -38,30 +51,40 @@ main proc
 	mov ebx, 0deadbeefh
 	mov eax, offset tweedledee
 	call npk_register
-	;call DumpRegs
 	
 	mov ebx, 0abadfeedh
 	mov eax, offset tweedledum
 	call npk_register
-	;call DumpRegs
 	
 	mov ebx, 0
 	mov edx, 0
 	
 	mov ebx, [offset cabinet]
 	mov ebx, [bx + offset_ebx]
-	call DumpRegs
 	
 	mov ebx, [offset cabinet]
 	mov ebx, [bx + 40 + offset_ebx]
-	call DumpRegs
 	
-	;pushw offset tweedledee
-	
-	exit
+	call npk_start
 
 main endp
 
+
+npk_start proc
+	; TODO: point to first context's stack pointer offset
+	; Load the first context cabinet into the registers and flags and start runnin'!
+	mov bx, offset cabinet
+	mov eax, [bx + offset_flags]
+	push eax
+	popfd
+	mov eax, [bx + offset_eax]
+	mov ecx, [bx + offset_ecx]
+	mov edx, [bx + offset_edx]
+	mov esp, [bx + offset_esp]
+	mov ebx, [bx + offset_ebx]
+	push esp
+	ret
+npk_start endp
 
 ; Function: Saves current context and swaps to the next "cabinet drawer" context
 ; Receives: Nothing
@@ -69,6 +92,8 @@ main endp
 ;  Returns: Nothing
 ; Clobbers: Nothing
 npk_yield proc
+
+	; TODO: point to correct stack pointer segment
     
 	; STEP 1: Save the current context in the cabinet!
 	pushfd
@@ -87,14 +112,24 @@ npk_yield proc
 	mov [bx + offset_flags], eax
 	
     ; STEP 2: increment to the next cabinet_drawer unless we are at number_registered, in which case we go back to the first
-    mov al, [cabinet_drawer]
+    mov eax, 0
+	mov al, [cabinet_drawer]
 	inc al
 	cmp al, [number_registered]
 	jne J1
 	mov al, 0
 
 J1:
+	; ...and then use the cabinet_drawer number to dynamically point at the cabinet offset
 	mov [cabinet_drawer], al
+	mov ebx, 0
+	mov bl, 40
+	mul bl
+	mov bx, ax
+	
+	mov bx, offset cabinet
+	add bx, ax
+	
 
     ; STEP 3: Unload the context from the cabinet based on a multiple of cabinet_drawer
 	mov eax, 0 ; clear these to avoid any complications...
@@ -122,10 +157,10 @@ J2:
 	mov esp, [bx + offset_esp]
 	mov ebx, [temp_ebx]
 	
-	
     ; STEP 4:
     ; Put the ESP, which is the return addr of the next function we want to run, and push it to the top of the stack...
-    ret ; ...and then this will start the next function
+    push esp
+	ret ; ...and then this will start the next function
 
 npk_yield endp
 
