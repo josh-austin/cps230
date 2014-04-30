@@ -21,26 +21,25 @@ offset_flags equ 20
 
 tweedledee proc
 	call DumpRegs
-	push cx
-		; Pause for 2 seconds so the viewer can read the output
-		mov cx, 0Fh
-		mov dx, 4240h
-		mov ah, 86h
-		int 15h
-		pop cx
-		
+	pusha
+	; Pause a second
+	mov cx, 0Fh
+	mov dx, 4240h
+	mov ah, 86h
+	int 15h
+	popa
 	call npk_yield
 tweedledee endp
 
 tweedledum proc
 	call DumpRegs
-	push cx
-		; Pause for 2 seconds so the viewer can read the output
-		mov cx, 0Fh
-		mov dx, 4240h
-		mov ah, 86h
-		int 15h
-		pop cx
+	pusha
+	; Pause a second
+	mov cx, 0Fh
+	mov dx, 4240h
+	mov ah, 86h
+	int 15h
+	popa
 	call npk_yield
 tweedledum endp
 
