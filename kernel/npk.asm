@@ -1,12 +1,13 @@
 TITLE Non-Preemptive Kernel (npk.asm)
-
-include strings.inc
+include irvine16.inc
+;include strings.inc
 
 .data
 number_registered byte 0
 cabinet_drawer byte 0
 cabinet  dword 256 dup(0) 
 temp_ebx dword ?
+temp_eax dword ?
 low_stack_section word 0FFFFh
 
 offset_eax equ 0
@@ -19,30 +20,45 @@ offset_flags equ 20
 .code
 
 tweedledee proc
-	call DumpRegs
+	;call DumpRegs
 	; TODO: delay 1 second
 	call npk_yield
 tweedledee endp
 
 tweedledum proc
-	call DumpRegs
+	;call DumpRegs
 	; TODO: delay 1 second
 	call npk_yield
 tweedledum endp
 
 main proc
+	mov ax, @data
+	mov ds, ax
 
 	mov ebx, 0deadbeefh
 	mov eax, offset tweedledee
 	call npk_register
+	;call DumpRegs
 	
-	mov edx, ebx
-	mov ebx, 0
+	mov ebx, 0abadfeedh
 	mov eax, offset tweedledum
 	call npk_register
+	;call DumpRegs
 	
-	pushw offset tweedledee
-	ret
+	mov ebx, 0
+	mov edx, 0
+	
+	mov ebx, [offset cabinet]
+	mov ebx, [bx + offset_ebx]
+	call DumpRegs
+	
+	mov ebx, [offset cabinet]
+	mov ebx, [bx + 40 + offset_ebx]
+	call DumpRegs
+	
+	;pushw offset tweedledee
+	
+	exit
 
 main endp
 
@@ -98,13 +114,13 @@ J2:
 	
 	mov eax, 0
 	mov eax, [bx + offset_ebx]
-	mov [tmp_ebx], eax
+	mov [temp_ebx], eax
 	
 	mov eax, [bx + offset_eax]
 	mov ecx, [bx + offset_ecx]
 	mov edx, [bx + offset_edx]
 	mov esp, [bx + offset_esp]
-	mov ebx, [tmp_ebx]
+	mov ebx, [temp_ebx]
 	
 	
     ; STEP 4:
@@ -119,29 +135,37 @@ npk_yield endp
 ; Requires: Nothing
 ;  Returns: Nothing
 ; Clobbers: Nothing
-
-; TODO: Use [number_registered] as a multiplier for dynamically setting the cabinet data memory offset
-; TODO: Use [number_registered] as a multiplier for dynamically setting the stack segment offset
 npk_register proc
 	pushad
 	pushfd
 
+	; STEP 1: point to the correct offset and then increment number_registered
+	push eax
+	push ebx
 	mov [temp_ebx], ebx
-    
-    mov ebx, offset cabinet
+	mov eax, 0
+	mov ebx, 0
+	mov al, [number_registered]
+	mov bl, 40
+	mul bl
+	add ax, offset cabinet
+	mov bx, ax
 	
-	; STEP 1:
-    mov [bx + offset_esp], esp
 	
+	mov al, [number_registered]
+	inc al
+	mov [number_registered], al
 	
 	; STEP 2:
     ; Registration!
-    
+    pop eax
+	mov [bx + offset_ebx], eax
+	;call DumpRegs
+    pop eax	
     mov [bx + offset_eax], eax
-    mov eax, [temp_ebx]
-    mov [bx + offset_ebx], eax
     mov [bx + offset_ecx], ecx
     mov [bx + offset_edx], edx
+	mov [bx + offset_esp], esp
 	
 	pop eax
 	mov [bx + offset_flags], eax
@@ -153,14 +177,12 @@ npk_register proc
 	
 	; Pointy, pointy!
     mov [low_stack_section], bx
+	mov eax, 0
     mov ss:[bx], ax
 	
 	mov ax, sizeof cabinet
-    mov [ax + ebx + offset_esp], ebx
-	
-	mov al, [number_registered]
-	inc al
-	mov [number_registered], al
+	add ebx, eax
+    mov [ebx + offset_esp], ebx
 	
 	mov [temp_ebx], ebx
 	
