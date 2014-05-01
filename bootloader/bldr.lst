@@ -4,8 +4,8 @@ bldr.asm
                                 .model tiny
                                 .386
                                 .code
-                                org 7c00h
-                                	; code here starts at offset 7c00h
+                                org 7c00h			; code here starts at offset 7c00h
+
 00007C00                        main proc
 00007C00  8CC8                  	mov ax, cs
 00007C02  8ED0                  	mov ss, ax
@@ -29,9 +29,9 @@ bldr.asm
 
 00007C20  426F6F74696E672E2E    mystring byte "Booting...", 0dh, 0ah, 0
 
-                                ; Function: Prints out a nul-terminated string to the screen
-                                ; Receives: bx register
-                                ;  Returns: A nul-terminated string displayed on the string
+                                ; Function: Prints out a null-terminated string to the screen
+                                ; Receives: bx register (which must hold "mystring" stored in memory)
+                                ;  Returns: A null-terminated string displayed on the string
                                 ; Requires: nothing
                                 ; Clobbers: nothing
 00007C2D                        print_string proc	
@@ -41,7 +41,7 @@ bldr.asm
 00007C31  8BDA                  	mov bx, dx
                                 	
 00007C33                        L1:							;Loop through each character of string	
-00007C33  3C00                  	cmp al, 0 				;Check to see if character is nul-terminator
+00007C33  3C00                  	cmp al, 0 				;Check to see if character is null-terminator
 00007C35  7502                  	jne outputString
 00007C37  7409                  	je endloop
 00007C39                        outputString:
@@ -57,9 +57,6 @@ bldr.asm
 00007C43                        	ret
 00007C44                        print_string endp
                                 	
-                                	
-
-
                                 org main+510
 00007DFE  55AA                  	byte 055h, 0aah
                                 	
@@ -81,8 +78,6 @@ Segments and Groups:
 
                 N a m e                 Size     Length   Align   Combine Class
 
-$$SYMBOLS  . . . . . . . . . . .        32 Bit   000000C3 Byte    Private 'DEBSYM'
-$$TYPES  . . . . . . . . . . . .        32 Bit   00000038 Byte    Private 'DEBTYP'
 DGROUP . . . . . . . . . . . . .        GROUP
 _TEXT  . . . . . . . . . . . . .        16 Bit   7E00     Word    Public  'CODE'
 _DATA  . . . . . . . . . . . . .        16 Bit   0000     Word    Public  'DATA'
@@ -92,8 +87,11 @@ Procedures, parameters and locals:
 
                 N a m e                 Type     Value    Segment  Length
 
-main . . . . . . . . . . . . . .        P Near   7C00     _TEXT    0020 Private  
-print_string . . . . . . . . . .        P Near   7C2D     _TEXT    0017 Private  
+main . . . . . . . . . . . . . .        P Near   7C00     _TEXT    0020 Public   
+print_string . . . . . . . . . .        P Near   7C2D     _TEXT    0017 Public   
+  outputString . . . . . . . . .        L Near   7C39     _TEXT
+  endloop  . . . . . . . . . . .        L Near   7C42     _TEXT
+  L1 . . . . . . . . . . . . . .        L Near   7C33     _TEXT
 
 
 Symbols:
@@ -107,9 +105,6 @@ Symbols:
 @code  . . . . . . . . . . . . .        Text   _TEXT
 @data  . . . . . . . . . . . . .        Text   DGROUP
 @stack . . . . . . . . . . . . .        Text   DGROUP
-L1 . . . . . . . . . . . . . . .        L Near          7C33h _TEXT 
-endloop  . . . . . . . . . . . .        L Near          7C42h _TEXT 
 mystring . . . . . . . . . . . .        Byte[13]        7C20h _TEXT 
-outputString . . . . . . . . . .        L Near          7C39h _TEXT 
 
-bldr.asm: 64 lines, 2 passes, 0 ms, 0 warnings, 0 errors
+bldr.asm: 61 lines, 2 passes, 0 ms, 0 warnings, 0 errors

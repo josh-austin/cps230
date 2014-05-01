@@ -2,8 +2,8 @@
 .model tiny
 .386
 .code
-org 7c00h
-	; code here starts at offset 7c00h
+org 7c00h			; code here starts at offset 7c00h
+
 main proc
 	mov ax, cs
 	mov ss, ax
@@ -27,9 +27,9 @@ main endp
 
 mystring byte "Booting...", 0dh, 0ah, 0
 
-; Function: Prints out a nul-terminated string to the screen
-; Receives: bx register
-;  Returns: A nul-terminated string displayed on the string
+; Function: Prints out a null-terminated string to the screen
+; Receives: bx register (which must hold "mystring" stored in memory)
+;  Returns: A null-terminated string displayed on the string
 ; Requires: nothing
 ; Clobbers: nothing
 print_string proc	
@@ -39,7 +39,7 @@ print_string proc
 	mov bx, dx
 	
 L1:							;Loop through each character of string	
-	cmp al, 0 				;Check to see if character is nul-terminator
+	cmp al, 0 				;Check to see if character is null-terminator
 	jne outputString
 	je endloop
 outputString:
@@ -55,9 +55,6 @@ jmp L1
 	ret
 print_string endp
 	
-	
-
-
 org main+510
 	byte 055h, 0aah
 	
