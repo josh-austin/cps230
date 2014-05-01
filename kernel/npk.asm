@@ -96,13 +96,26 @@ npk_yield proc
     
 	; STEP 1: Save the current context in the cabinet!
 	pushfd
+	
+	sub esp, 4
 
-	mov [temp_ebx], ebx
-    
-    mov ebx, offset cabinet
+	push ebx
+    push eax
+	
+    mov ebx, 0
+	mov eax, 0
+	
+	mov al, [cabinet_drawer]
+	mov bl, 40
+	mul bl
+	movzx bx, al
+	add bx, offset cabinet
+	
+	
     mov [bx + offset_esp], esp
+	pop eax
     mov [bx + offset_eax], eax
-    mov eax, [temp_ebx]
+    pop eax
     mov [bx + offset_ebx], eax
     mov [bx + offset_ecx], ecx
     mov [bx + offset_edx], edx
