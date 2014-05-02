@@ -10,55 +10,63 @@ bldr.asm
 00007C00  8CC8                  	mov ax, cs
 00007C02  8ED0                  	mov ss, ax
 00007C04  8ED8                  	mov ds, ax
-00007C06  BA227C                	mov dx, offset mystring
-00007C09  E82300                	call print_string
-00007C0C  B402                  	mov ah, 02
-00007C0E  B500                  	mov ch, 0
-00007C10  B600                  	mov dh, 0
-00007C12  B200                  	mov dl, 0
-00007C14  B028                  	mov al, 40
-00007C16  B80008                	mov ax, 0800h
-00007C19  8EC0                  	mov es, ax
-00007C1B  BB0000                	mov bx, 0000h
+                                	;mov dx, offset mystring
+                                	;call print_string
+00007C06  B402                  	mov ah, 02
+00007C08  B500                  	mov ch, 0
+00007C0A  B600                  	mov dh, 0
+00007C0C  B200                  	mov dl, 0
+00007C0E  B028                  	mov al, 40
+00007C10  B80008                	mov ax, 0800h
+00007C13  8EC0                  	mov es, ax
+00007C15  BB0000                	mov bx, 0000h
                                 	
-00007C1E  CD13                  	int 13h
+00007C18  CD13                  	int 13h
                                 	
-                                ;	call dumpregs
-00007C20  EB24                  	jmp Past_it_all
+00007C1A  7208                  	jc all_good
+00007C1C  BA397C                	mov dx, offset errorstr
+00007C1F  E82F00                	call print_string
+00007C22  EB41                  	jmp Past_it_all
+00007C24                        all_good:
+                                	
+00007C24  680008                	pushw 0800h
+00007C27  6A00                  	pushw 0000h
+00007C29  CB                    	retf
+                                	
+00007C2A  EB39                  	jmp Past_it_all
 
-00007C22                        main endp
+00007C2C                        main endp
 
-00007C22  426F6F74696E672E2E    mystring byte "Booting...", 0dh, 0ah, 0
+00007C2C  426F6F74696E672E2E    mystring byte "Booting...", 0dh, 0ah, 0
+00007C39  536F6D657468696E67    errorstr byte "Something went wrong...", 0
 
                                 ; Function: Prints out a null-terminated string to the screen
                                 ; Receives: bx register (which must hold "mystring" stored in memory)
                                 ;  Returns: A null-terminated string displayed on the string
                                 ; Requires: nothing
                                 ; Clobbers: nothing
-00007C2F                        print_string proc	
-00007C2F  60                    	pusha
-00007C30  BA227C                	mov dx, offset mystring
-
-00007C33  8BDA                  	mov bx, dx
+00007C51                        print_string proc	
+00007C51  60                    	pusha
+00007C52  8BDA                  	mov bx, dx
                                 	
-00007C35                        L1:							;Loop through each character of string	
-00007C35  3C00                  	cmp al, 0 				;Check to see if character is null-terminator
-00007C37  7502                  	jne outputString
-00007C39  7409                  	je endloop
-00007C3B                        outputString:
-00007C3B  8A07                  	mov al, [bx]	
-00007C3D  B40E                  	mov ah, 0eh				;output the character of the string
-00007C3F  CD10                  	int 10h
-00007C41  43                    	inc bx					;increment bx register to next character in string
+00007C54                        L1:							;Loop through each character of string	
+00007C54  3C00                  	cmp al, 0 				;Check to see if character is null-terminator
+00007C56  7502                  	jne outputString
+00007C58  7409                  	je endloop
+00007C5A                        outputString:
+00007C5A  8A07                  	mov al, [bx]	
+00007C5C  B40E                  	mov ah, 0eh				;output the character of the string
+00007C5E  CD10                  	int 10h
+00007C60  43                    	inc bx					;increment bx register to next character in string
 
-00007C42  EBF1                  jmp L1
+00007C61  EBF1                  jmp L1
 
-00007C44                        	endloop:
-00007C44  61                    	popa
-00007C45                        	ret
-00007C46                        print_string endp
+00007C63                        	endloop:
+00007C63  61                    	popa
+00007C64                        	ret
+00007C65                        print_string endp
 
-00007C46                        Past_it_all:
+00007C65                        Past_it_all:
                                 	
                                 org main+510
 00007DFE  55AA                  	byte 055h, 0aah
@@ -81,8 +89,8 @@ Segments and Groups:
 
                 N a m e                 Size     Length   Align   Combine Class
 
-$$SYMBOLS  . . . . . . . . . . .        32 Bit   000000D8 Byte    Private 'DEBSYM'
-$$TYPES  . . . . . . . . . . . .        32 Bit   00000038 Byte    Private 'DEBTYP'
+$$SYMBOLS  . . . . . . . . . . .        32 Bit   000000FD Byte    Private 'DEBSYM'
+$$TYPES  . . . . . . . . . . . .        32 Bit   00000048 Byte    Private 'DEBTYP'
 DGROUP . . . . . . . . . . . . .        GROUP
 _TEXT  . . . . . . . . . . . . .        16 Bit   7E00     Word    Public  'CODE'
 _DATA  . . . . . . . . . . . . .        16 Bit   0000     Word    Public  'DATA'
@@ -92,8 +100,8 @@ Procedures, parameters and locals:
 
                 N a m e                 Type     Value    Segment  Length
 
-main . . . . . . . . . . . . . .        P Near   7C00     _TEXT    0022 Private  
-print_string . . . . . . . . . .        P Near   7C2F     _TEXT    0017 Private  
+main . . . . . . . . . . . . . .        P Near   7C00     _TEXT    002C Private  
+print_string . . . . . . . . . .        P Near   7C51     _TEXT    0014 Private  
 
 
 Symbols:
@@ -107,10 +115,12 @@ Symbols:
 @code  . . . . . . . . . . . . .        Text   _TEXT
 @data  . . . . . . . . . . . . .        Text   DGROUP
 @stack . . . . . . . . . . . . .        Text   DGROUP
-L1 . . . . . . . . . . . . . . .        L Near          7C35h _TEXT 
-Past_it_all  . . . . . . . . . .        L Near          7C46h _TEXT 
-endloop  . . . . . . . . . . . .        L Near          7C44h _TEXT 
-mystring . . . . . . . . . . . .        Byte[13]        7C22h _TEXT 
-outputString . . . . . . . . . .        L Near          7C3Bh _TEXT 
+L1 . . . . . . . . . . . . . . .        L Near          7C54h _TEXT 
+Past_it_all  . . . . . . . . . .        L Near          7C65h _TEXT 
+all_good . . . . . . . . . . . .        L Near          7C24h _TEXT 
+endloop  . . . . . . . . . . . .        L Near          7C63h _TEXT 
+errorstr . . . . . . . . . . . .        Byte[24]        7C39h _TEXT 
+mystring . . . . . . . . . . . .        Byte[13]        7C2Ch _TEXT 
+outputString . . . . . . . . . .        L Near          7C5Ah _TEXT 
 
-bldr.asm: 64 lines, 2 passes, 0 ms, 0 warnings, 0 errors
+bldr.asm: 72 lines, 2 passes, 15 ms, 0 warnings, 0 errors

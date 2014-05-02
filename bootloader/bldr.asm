@@ -1,4 +1,3 @@
-;include irvine16.inc
 .model tiny
 .386
 .code
@@ -8,8 +7,8 @@ main proc
 	mov ax, cs
 	mov ss, ax
 	mov ds, ax
-	mov dx, offset mystring
-	call print_string
+	;mov dx, offset mystring
+	;call print_string
 	mov ah, 02
 	mov ch, 0
 	mov dh, 0
@@ -21,11 +20,22 @@ main proc
 	
 	int 13h
 	
+	jc all_good
+	mov dx, offset errorstr
+	call print_string
+	jmp Past_it_all
+all_good:
+	
+	pushw 0800h
+	pushw 0000h
+	retf
+	
 	jmp Past_it_all
 
 main endp
 
 mystring byte "Booting...", 0dh, 0ah, 0
+errorstr byte "Something went wrong...", 0
 
 ; Function: Prints out a null-terminated string to the screen
 ; Receives: bx register (which must hold "mystring" stored in memory)
@@ -34,8 +44,6 @@ mystring byte "Booting...", 0dh, 0ah, 0
 ; Clobbers: nothing
 print_string proc	
 	pusha
-	mov dx, offset mystring
-
 	mov bx, dx
 	
 L1:							;Loop through each character of string	
