@@ -21,7 +21,7 @@ main proc
 	
 	int 13h
 	
-;	call print_string
+	jmp Past_it_all
 
 main endp
 
@@ -54,6 +54,8 @@ jmp L1
 	popa
 	ret
 print_string endp
+
+Past_it_all:
 	
 org main+510
 	byte 055h, 0aah

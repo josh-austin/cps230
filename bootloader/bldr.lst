@@ -10,8 +10,8 @@ bldr.asm
 00007C00  8CC8                  	mov ax, cs
 00007C02  8ED0                  	mov ss, ax
 00007C04  8ED8                  	mov ds, ax
-00007C06  BA207C                	mov dx, offset mystring
-00007C09  E82100                	call print_string
+00007C06  BA227C                	mov dx, offset mystring
+00007C09  E82300                	call print_string
 00007C0C  B402                  	mov ah, 02
 00007C0E  B500                  	mov ch, 0
 00007C10  B600                  	mov dh, 0
@@ -23,39 +23,42 @@ bldr.asm
                                 	
 00007C1E  CD13                  	int 13h
                                 	
-                                ;	call print_string
+                                ;	call dumpregs
+00007C20  EB24                  	jmp Past_it_all
 
-00007C20                        main endp
+00007C22                        main endp
 
-00007C20  426F6F74696E672E2E    mystring byte "Booting...", 0dh, 0ah, 0
+00007C22  426F6F74696E672E2E    mystring byte "Booting...", 0dh, 0ah, 0
 
                                 ; Function: Prints out a null-terminated string to the screen
                                 ; Receives: bx register (which must hold "mystring" stored in memory)
                                 ;  Returns: A null-terminated string displayed on the string
                                 ; Requires: nothing
                                 ; Clobbers: nothing
-00007C2D                        print_string proc	
-00007C2D  60                    	pusha
-00007C2E  BA207C                	mov dx, offset mystring
+00007C2F                        print_string proc	
+00007C2F  60                    	pusha
+00007C30  BA227C                	mov dx, offset mystring
 
-00007C31  8BDA                  	mov bx, dx
+00007C33  8BDA                  	mov bx, dx
                                 	
-00007C33                        L1:							;Loop through each character of string	
-00007C33  3C00                  	cmp al, 0 				;Check to see if character is null-terminator
-00007C35  7502                  	jne outputString
-00007C37  7409                  	je endloop
-00007C39                        outputString:
-00007C39  8A07                  	mov al, [bx]	
-00007C3B  B40E                  	mov ah, 0eh				;output the character of the string
-00007C3D  CD10                  	int 10h
-00007C3F  43                    	inc bx					;increment bx register to next character in string
+00007C35                        L1:							;Loop through each character of string	
+00007C35  3C00                  	cmp al, 0 				;Check to see if character is null-terminator
+00007C37  7502                  	jne outputString
+00007C39  7409                  	je endloop
+00007C3B                        outputString:
+00007C3B  8A07                  	mov al, [bx]	
+00007C3D  B40E                  	mov ah, 0eh				;output the character of the string
+00007C3F  CD10                  	int 10h
+00007C41  43                    	inc bx					;increment bx register to next character in string
 
-00007C40  EBF1                  jmp L1
+00007C42  EBF1                  jmp L1
 
-00007C42                        	endloop:
-00007C42  61                    	popa
-00007C43                        	ret
-00007C44                        print_string endp
+00007C44                        	endloop:
+00007C44  61                    	popa
+00007C45                        	ret
+00007C46                        print_string endp
+
+00007C46                        Past_it_all:
                                 	
                                 org main+510
 00007DFE  55AA                  	byte 055h, 0aah
@@ -78,6 +81,8 @@ Segments and Groups:
 
                 N a m e                 Size     Length   Align   Combine Class
 
+$$SYMBOLS  . . . . . . . . . . .        32 Bit   000000D8 Byte    Private 'DEBSYM'
+$$TYPES  . . . . . . . . . . . .        32 Bit   00000038 Byte    Private 'DEBTYP'
 DGROUP . . . . . . . . . . . . .        GROUP
 _TEXT  . . . . . . . . . . . . .        16 Bit   7E00     Word    Public  'CODE'
 _DATA  . . . . . . . . . . . . .        16 Bit   0000     Word    Public  'DATA'
@@ -87,11 +92,8 @@ Procedures, parameters and locals:
 
                 N a m e                 Type     Value    Segment  Length
 
-main . . . . . . . . . . . . . .        P Near   7C00     _TEXT    0020 Public   
-print_string . . . . . . . . . .        P Near   7C2D     _TEXT    0017 Public   
-  outputString . . . . . . . . .        L Near   7C39     _TEXT
-  endloop  . . . . . . . . . . .        L Near   7C42     _TEXT
-  L1 . . . . . . . . . . . . . .        L Near   7C33     _TEXT
+main . . . . . . . . . . . . . .        P Near   7C00     _TEXT    0022 Private  
+print_string . . . . . . . . . .        P Near   7C2F     _TEXT    0017 Private  
 
 
 Symbols:
@@ -105,6 +107,10 @@ Symbols:
 @code  . . . . . . . . . . . . .        Text   _TEXT
 @data  . . . . . . . . . . . . .        Text   DGROUP
 @stack . . . . . . . . . . . . .        Text   DGROUP
-mystring . . . . . . . . . . . .        Byte[13]        7C20h _TEXT 
+L1 . . . . . . . . . . . . . . .        L Near          7C35h _TEXT 
+Past_it_all  . . . . . . . . . .        L Near          7C46h _TEXT 
+endloop  . . . . . . . . . . . .        L Near          7C44h _TEXT 
+mystring . . . . . . . . . . . .        Byte[13]        7C22h _TEXT 
+outputString . . . . . . . . . .        L Near          7C3Bh _TEXT 
 
-bldr.asm: 61 lines, 2 passes, 0 ms, 0 warnings, 0 errors
+bldr.asm: 64 lines, 2 passes, 0 ms, 0 warnings, 0 errors
