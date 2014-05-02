@@ -1,0 +1,412 @@
+JWasm v2.11, Oct 20 2013
+npkb.asm
+                                TITLE Non-Preemptive Kernel (npk.asm)
+                                ; Authors:        Ashley Lane, Cameron Thacker, Joshua Austin
+                                ; Description:    Looping NPK
+                                ; Date Submitted: ?
+                                ; Helps:          Wikipedia, StackOverflow
+                                ; Usage:          Watch it run after pressing a key
+
+                                .model tiny
+                                .stack 4000
+                                .386
+                                .code
+
+00000000  E93305                jmp Wonderland
+
+ = 0                            offset_eax			equ		0
+ = 4                            offset_ebx			equ		4
+ = 8                            offset_ecx			equ		8
+ = C                            offset_edx			equ		12
+ = 10                           offset_esp			equ		16
+ = 14                           offset_flags		equ		20
+00000003  0000                  number_registered	word	0
+00000005  00                    cabinet_drawer		byte	0
+00000006  000000000000000000    cabinet				dword	256 dup(0)
+00000406  000000000000000000    registered			word	20 dup(0)
+0000042E  0000                  placeholder			word	0
+00000430  546865204368657368    greeting			byte	"The Cheshire Non-Preemptive Kernel", 0
+00000453  6279204173686C6579    authors				byte	"by Ashley Lane, Cameron Thacker, and Joshua Austin", 0
+00000486  524541445921202870    instruct			byte	"READY! (press any key to start)", 0
+000004A6  54574545444C452044    tweedledee_msg		byte	"TWEEDLE DEE: The time has come, the Walrus said...", 0
+000004D9  54574545444C452044    tweedledum_msg		byte	"TWEEDLE DUM: Why, sometimes I've believed as many as six impossible things before breakfast.", 0
+
+00000536                        Wonderland:
+
+00000536                        main proc
+
+00000536  8CC8                  	mov ax, cs
+00000538  8ED0                  	mov ss, ax
+0000053A  8ED8                  	mov ds, ax
+
+                                	; Activate VGA (640x480) mode
+0000053C  B400                  	mov ah, 00h
+0000053E  B012                  	mov al, 12h
+00000540  CD10                  	int 10h
+                                	
+                                	; register tweedledee and tweedledum
+00000542  66BBEFBEADDE          	mov ebx, 0deadbeefh
+00000548  66B8C0060000          	mov eax, offset tweedledee
+0000054E  E82700                	call npk_register
+                                	
+00000551  66BBEEABEDFE          	mov ebx, 0feedabeeh
+00000557  66B8D7060000          	mov eax, offset tweedledum
+0000055D  E81800                	call npk_register
+                                	
+                                	; greet the user and anticipate a keypress
+00000560  BA3004                	mov dx, offset greeting
+00000563  E88801                	call print_line
+                                	
+00000566  BA5304                	mov dx, offset authors
+00000569  E88201                	call print_line
+                                	
+0000056C  BA8604                	mov dx, offset instruct
+0000056F  E87C01                	call print_line
+                                	
+00000572  E89B01                	call read_char
+                                	
+                                	; let the looping begin!
+00000575  E82501                	call npk_start
+                                	
+                                	; No termination code since our NPK will be in an eternal loop  ;-)
+
+00000578                        main endp
+
+
+
+                                ; Function: Registers a function and context into the cabinet
+                                ; Receives: task address in AX
+                                ; Requires: Nothing
+                                ;  Returns: Nothing
+                                ; Clobbers: Nothing
+00000578                        npk_register proc
+00000578  6660                  	pushad
+0000057A  669C                  	pushfd
+                                	; STEP 1: point to the correct offset and then increment number_registered
+                                	; (after registering ax into the array of registered function addresses)
+                                	
+0000057C  6653                  	push ebx
+0000057E  660FB71E0300          	movzx ebx, [number_registered]
+                                	;call DumpRegs
+00000584  031E0300              	add bx, [number_registered] ; number_registered is added twice since it is 2 bytes long (a "word")
+00000588  89870604              	mov [registered + bx], ax 
+0000058C  665B                  	pop ebx
+                                	
+0000058E  6650                  	push eax
+00000590  6653                  	push ebx
+00000592  66B800000000          	mov eax, 0
+00000598  66BB00000000          	mov ebx, 0
+                                	
+0000059E  660FB7060300          	movzx eax, [number_registered]
+000005A4  B328                  	mov bl, 40
+000005A6  F6E3                  	mul bl
+000005A8  050600                	add ax, offset cabinet
+000005AB  668BD8                	mov ebx, eax
+                                	
+000005AE  660FB7060300          	movzx eax, [number_registered]
+000005B4  40                    	inc ax
+000005B5  A30300                	mov [number_registered], ax
+                                	
+                                	; STEP 2:
+                                    ; Registration!
+000005B8  6658                      pop eax
+000005BA  66894704              	mov [bx + offset_ebx], eax
+000005BE  6658                      pop eax	
+000005C0  668907                    mov [bx + offset_eax], eax
+000005C3  66894F08                  mov [bx + offset_ecx], ecx
+000005C7  6689570C                  mov [bx + offset_edx], edx	
+000005CB  6658                  	pop eax
+000005CD  66894714              	mov [bx + offset_flags], eax
+000005D1  891E2E04              	mov [placeholder], bx
+                                	
+                                	; STEP 3:
+                                    ; Subtract from the stack section in increments of 256 as necessary
+000005D5  8BC3                  	mov ax, bx
+000005D7  BBFFFF                    mov bx, 0FFFFh
+000005DA  660FB70E0300          	movzx ecx, [number_registered]
+000005E0  6641                  	inc ecx
+                                	
+000005E2                        stack_pointy_loop:	
+000005E2  81EB0001                  sub bx, 100h
+000005E6  E2FA                  	loop stack_pointy_loop
+                                	
+                                	; Finally, register ESP with the current task stack section
+000005E8  6650                  	push eax
+000005EA  66368B07              	mov eax, ss:[bx]
+000005EE  8B1E2E04              	mov bx, [placeholder]
+000005F2  66894710                  mov [bx + offset_esp], eax
+000005F6  6658                  	pop eax
+                                	
+                                	
+000005F8  6661                      popad
+000005FA                            ret
+
+000005FB                        npk_register endp
+
+
+
+                                ; Function: Saves current context and swaps to the next "cabinet drawer" context
+                                ; Receives: Nothing
+                                ; Requires: Nothing
+                                ;  Returns: Nothing
+                                ; Clobbers: Nothing
+000005FB                        npk_yield proc
+
+                                	; STEP 1: Save registers and flags to the current cabinet drawer
+000005FB  669C                  	pushfd
+000005FD  6653                  	push ebx
+000005FF  6650                      push eax
+                                	
+00000601  66BB00000000              mov ebx, 0
+00000607  66B800000000          	mov eax, 0
+                                	
+0000060D  A00500                	mov al, [cabinet_drawer]
+00000610  B328                  	mov bl, 40
+00000612  F6E3                  	mul bl
+00000614  8BD8                  	mov bx, ax
+00000616  81C30600              	add bx, offset cabinet
+                                	
+0000061A  66896710                  mov [bx + offset_esp], esp
+0000061E  6658                  	pop eax
+00000620  668907                    mov [bx + offset_eax], eax
+00000623  6658                      pop eax
+00000625  66894704                  mov [bx + offset_ebx], eax
+00000629  66894F08                  mov [bx + offset_ecx], ecx
+0000062D  6689570C                  mov [bx + offset_edx], edx
+                                	
+00000631  6658                  	pop eax
+00000633  66894714              	mov [bx + offset_flags], eax
+                                	
+                                	; STEP 2: Unload the next cabinet drawer into the registers and flags
+00000637  66B800000000              mov eax, 0
+0000063D  A00500                	mov al, [cabinet_drawer]
+00000640  FEC0                  	inc al
+00000642  3B060300              	cmp ax, [number_registered]
+00000646  7502                  	jne J1
+00000648  B000                  	mov al, 0
+
+0000064A                        J1:
+                                	; ...and then use the cabinet_drawer number to dynamically point at the cabinet offset
+0000064A  A20500                	mov [cabinet_drawer], al
+                                	
+
+                                    ; STEP 3: Unload the context from the cabinet based on a multiple of cabinet_drawer
+0000064D  66B800000000          	mov eax, 0 ; clear these to avoid any complications...
+00000653  66BB00000000          	mov ebx, 0
+                                	
+00000659  0FB6060500            	movzx ax, [cabinet_drawer]
+0000065E  803E050000            	cmp [cabinet_drawer], 0 ; if it's 0 then we can skip multiplying
+00000663  7405                  	je J2
+00000665  BB2800                	mov bx, 40
+00000668  F7E3                  	mul bx
+
+0000066A                        J2:
+0000066A  81C30600                  add bx, offset cabinet
+0000066E  668B4714              	mov eax, [bx + offset_flags]
+00000672  6650                  	pushd eax
+00000674  669D                  	popfd
+                                	
+00000676  668B07                	mov eax, [bx + offset_eax]
+00000679  668B4F08              	mov ecx, [bx + offset_ecx]
+0000067D  668B570C              	mov edx, [bx + offset_edx]
+00000681  668B6710              	mov esp, [bx + offset_esp]
+00000685  668B5F04              	mov ebx, [bx + offset_ebx]
+
+                                	; STEP 3: Go to the next function	
+00000689  891E2E04              	mov [placeholder], bx
+0000068D  0FB61E0500            	movzx bx, [cabinet_drawer]
+00000692  03DB                  	add bx, bx ; added because offsets are 2 bytes (a "word")
+00000694  FFB70604              	push [registered + bx]
+00000698  8B1E2E04              	mov bx, [placeholder]
+0000069C                        	ret
+
+
+0000069D                        npk_yield endp
+
+
+
+                                ; Function: Starts the happiness
+                                ; Receives: Nothing
+                                ; Requires: Nothing
+                                ;  Returns: Nothing
+                                ; Clobbers: Nothing
+0000069D                        npk_start proc
+                                	; Load the first context cabinet into the registers and flags and start runnin'!
+0000069D  BB0600                	mov bx, offset cabinet
+000006A0  668B4714              	mov eax, [bx + offset_flags]
+000006A4  6650                  	push eax
+000006A6  669D                  	popfd
+000006A8  668B07                	mov eax, [bx + offset_eax]
+000006AB  668B4F08              	mov ecx, [bx + offset_ecx]
+000006AF  668B570C              	mov edx, [bx + offset_edx]
+000006B3  668B6710              	mov esp, [bx + offset_esp]
+000006B7  668B5F04              	mov ebx, [bx + offset_ebx]
+000006BB  FF360604              	push [registered]
+000006BF                        	ret
+000006C0                        npk_start endp
+
+
+
+                                ; Function: Just a dumb loop with a reference to Alice in Wonderland
+                                ; Receives: Nothing
+                                ; Requires: Nothing
+                                ;  Returns: Nothing
+                                ; Clobbers: Nothing
+000006C0                        tweedledee proc
+000006C0                        tweedledee_loop:
+000006C0  BAA604                	mov dx, offset tweedledee_msg
+000006C3  E82800                	call print_line
+000006C6  60                    	pusha
+                                	; Pause a second
+000006C7  B90F00                	mov cx, 0Fh
+000006CA  BA4042                	mov dx, 4240h
+000006CD  B486                  	mov ah, 86h
+000006CF  CD15                  	int 15h
+000006D1  61                    	popa
+000006D2  E826FF                	call npk_yield
+000006D5  EBE9                  	jmp tweedledee_loop
+000006D7                        tweedledee endp
+
+
+
+                                ; Function: Just another dumb loop with a reference to Alice in Wonderland
+                                ; Receives: Nothing
+                                ; Requires: Nothing
+                                ;  Returns: Nothing
+                                ; Clobbers: Nothing
+000006D7                        tweedledum proc
+000006D7                        tweedledum_loop:
+000006D7  BAD904                	mov dx, offset tweedledum_msg
+000006DA  E81100                	call print_line
+000006DD  60                    	pusha
+                                	; Pause a second
+000006DE  B90F00                	mov cx, 0Fh
+000006E1  BA4042                	mov dx, 4240h
+000006E4  B486                  	mov ah, 86h
+000006E6  CD15                  	int 15h
+000006E8  61                    	popa
+000006E9  E80FFF                	call npk_yield
+000006EC  EBE9                  	jmp tweedledum_loop
+000006EE                        tweedledum endp
+
+
+
+                                ; Function: Prints the ASCII string of a byte array, plus a newline (\r\n), to the screen in green via BIOS
+                                ; Receives: DX
+                                ; Requires: Nothing
+                                ;  Returns: Nothing
+                                ; Clobbers: Nothing
+000006EE                        print_line proc
+000006EE  60                    	pusha
+
+000006EF  BE0000                	mov si, 0
+000006F2  8BDA                  	mov bx, dx
+
+000006F4                        	printloop:
+000006F4  8A00                  		mov al, [bx + si] ; put the next piece of the array into AL
+000006F6  3C00                  		cmp al, 0
+000006F8  740B                  		jz endprint
+000006FA  B40E                  		mov ah, 0Eh   ; 0Eh in BIOS means print character 
+000006FC  53                    		push bx
+000006FD  B302                  		mov bl, 0010b ; Set foreground color to green
+000006FF  CD10                  		int 10h		  ; BIOS interrupt
+00000701  5B                    		pop bx
+00000702  46                    		inc si
+00000703  EBEF                  		jmp printloop
+00000705                        	endprint:
+00000705  B80D0E                		mov  ax, 0e0dh
+00000708  CD10                  		int  10h
+0000070A  B00A                  		mov  al, 0ah
+0000070C  CD10                  		int  10h
+0000070E  61                    		popa
+0000070F                        		ret
+00000710                        print_line endp
+
+
+
+                                ; Description: Reads a character from keyboard input
+                                ; Receives:    ASCII char via BIOS
+                                ; Requires:    Nothing
+                                ; Returns:     ASCII char in AL
+                                ; Clobbers:    AL, AH
+00000710                        read_char proc
+00000710  B410                  	mov ah, 10h ; read keypress
+00000712  CD16                  	int 16h     ; keyboard interrupt
+00000714                        	ret
+00000715                        read_char endp
+
+                                end main
+
+
+Macros:
+
+                N a m e                 Type
+
+@CatStr  . . . . . . . . . . . .        Func
+@Environ . . . . . . . . . . . .        Func
+@InStr . . . . . . . . . . . . .        Func
+@SizeStr . . . . . . . . . . . .        Func
+@SubStr  . . . . . . . . . . . .        Func
+
+
+Segments and Groups:
+
+                N a m e                 Size     Length   Align   Combine Class
+
+DGROUP . . . . . . . . . . . . .        GROUP
+_TEXT  . . . . . . . . . . . . .        16 Bit   0715     Word    Public  'CODE'
+_DATA  . . . . . . . . . . . . .        16 Bit   0000     Word    Public  'DATA'
+STACK  . . . . . . . . . . . . .        16 Bit   0FA0     Para    Stack   'STACK'
+
+
+Procedures, parameters and locals:
+
+                N a m e                 Type     Value    Segment  Length
+
+main . . . . . . . . . . . . . .        P Near   0536     _TEXT    0042 Public   
+npk_register . . . . . . . . . .        P Near   0578     _TEXT    0083 Public   
+  stack_pointy_loop  . . . . . .        L Near   05E2     _TEXT
+npk_start  . . . . . . . . . . .        P Near   069D     _TEXT    0023 Public   
+npk_yield  . . . . . . . . . . .        P Near   05FB     _TEXT    00A2 Public   
+  J1 . . . . . . . . . . . . . .        L Near   064A     _TEXT
+  J2 . . . . . . . . . . . . . .        L Near   066A     _TEXT
+print_line . . . . . . . . . . .        P Near   06EE     _TEXT    0022 Public   
+  endprint . . . . . . . . . . .        L Near   0705     _TEXT
+  printloop  . . . . . . . . . .        L Near   06F4     _TEXT
+read_char  . . . . . . . . . . .        P Near   0710     _TEXT    0005 Public   
+tweedledee . . . . . . . . . . .        P Near   06C0     _TEXT    0017 Public   
+  tweedledee_loop  . . . . . . .        L Near   06C0     _TEXT
+tweedledum . . . . . . . . . . .        P Near   06D7     _TEXT    0017 Public   
+  tweedledum_loop  . . . . . . .        L Near   06D7     _TEXT
+
+
+Symbols:
+
+                N a m e                 Type       Value     Attr
+
+@CodeSize  . . . . . . . . . . .        Number             0h 
+@DataSize  . . . . . . . . . . .        Number             0h 
+@Interface . . . . . . . . . . .        Number             0h 
+@Model . . . . . . . . . . . . .        Number             1h 
+@code  . . . . . . . . . . . . .        Text   _TEXT
+@data  . . . . . . . . . . . . .        Text   DGROUP
+@stack . . . . . . . . . . . . .        Text   DGROUP
+Wonderland . . . . . . . . . . .        L Near           536h _TEXT 
+authors  . . . . . . . . . . . .        Byte[51]         453h _TEXT 
+cabinet  . . . . . . . . . . . .        DWord[256]         6h _TEXT 
+cabinet_drawer . . . . . . . . .        Byte               5h _TEXT 
+greeting . . . . . . . . . . . .        Byte[35]         430h _TEXT 
+instruct . . . . . . . . . . . .        Byte[32]         486h _TEXT 
+number_registered  . . . . . . .        Word               3h _TEXT 
+offset_eax . . . . . . . . . . .        Number             0h 
+offset_ebx . . . . . . . . . . .        Number             4h 
+offset_ecx . . . . . . . . . . .        Number             8h 
+offset_edx . . . . . . . . . . .        Number             Ch 
+offset_esp . . . . . . . . . . .        Number            10h 
+offset_flags . . . . . . . . . .        Number            14h 
+placeholder  . . . . . . . . . .        Word             42Eh _TEXT 
+registered . . . . . . . . . . .        Word[20]         406h _TEXT 
+tweedledee_msg . . . . . . . . .        Byte[51]         4A6h _TEXT 
+tweedledum_msg . . . . . . . . .        Byte[93]         4D9h _TEXT 
+
+npkb.asm: 336 lines, 2 passes, 0 ms, 0 warnings, 0 errors

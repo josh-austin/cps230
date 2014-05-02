@@ -1,8 +1,16 @@
 TITLE Non-Preemptive Kernel (npk.asm)
+; Authors:        Ashley Lane, Cameron Thacker, Joshua Austin
+; Description:    Looping NPK
+; Date Submitted: ?
+; Helps:          Wikipedia, StackOverflow
+; Usage:          Watch it run after pressing a key
 
-include irvine16.inc
+.model tiny
+.stack 4000
+.386
+.code
 
-.data
+jmp Wonderland
 
 offset_eax			equ		0
 offset_ebx			equ		4
@@ -15,17 +23,24 @@ cabinet_drawer		byte	0
 cabinet				dword	256 dup(0)
 registered			word	20 dup(0)
 placeholder			word	0
-greeting			byte	"The Cheshire Non-Preemptive Cat", 0
-authors				byte	"by Cameron Thacker, Ashley Lane, Josh Austin"
+greeting			byte	"The Cheshire Non-Preemptive Kernel", 0
+authors				byte	"by Ashley Lane, Cameron Thacker, and Joshua Austin", 0
+instruct			byte	"READY! (press any key to start)", 0
 tweedledee_msg		byte	"TWEEDLE DEE: The time has come, the Walrus said...", 0
 tweedledum_msg		byte	"TWEEDLE DUM: Why, sometimes I've believed as many as six impossible things before breakfast.", 0
 
-.code
+Wonderland:
 
 main proc
-	; DOS only: register the data segment since we're not in Wonderland yet
-	mov ax, @data
+
+	mov ax, cs
+	mov ss, ax
 	mov ds, ax
+
+	; Activate VGA (640x480) mode
+	mov ah, 00h
+	mov al, 12h
+	int 10h
 	
 	; register tweedledee and tweedledum
 	mov ebx, 0deadbeefh
@@ -36,12 +51,25 @@ main proc
 	mov eax, offset tweedledum
 	call npk_register
 	
+	; greet the user and anticipate a keypress
+	mov dx, offset greeting
+	call print_line
+	
+	mov dx, offset authors
+	call print_line
+	
+	mov dx, offset instruct
+	call print_line
+	
+	call read_char
+	
 	; let the looping begin!
 	call npk_start
 	
 	; No termination code since our NPK will be in an eternal loop  ;-)
 
 main endp
+
 
 
 ; Function: Registers a function and context into the cabinet
@@ -112,6 +140,7 @@ stack_pointy_loop:
     ret
 
 npk_register endp
+
 
 
 ; Function: Saves current context and swaps to the next "cabinet drawer" context
@@ -193,6 +222,7 @@ J2:
 npk_yield endp
 
 
+
 ; Function: Starts the happiness
 ; Receives: Nothing
 ; Requires: Nothing
@@ -214,6 +244,7 @@ npk_start proc
 npk_start endp
 
 
+
 ; Function: Just a dumb loop with a reference to Alice in Wonderland
 ; Receives: Nothing
 ; Requires: Nothing
@@ -221,7 +252,8 @@ npk_start endp
 ; Clobbers: Nothing
 tweedledee proc
 tweedledee_loop:
-	call DumpRegs
+	mov dx, offset tweedledee_msg
+	call print_line
 	pusha
 	; Pause a second
 	mov cx, 0Fh
@@ -234,6 +266,7 @@ tweedledee_loop:
 tweedledee endp
 
 
+
 ; Function: Just another dumb loop with a reference to Alice in Wonderland
 ; Receives: Nothing
 ; Requires: Nothing
@@ -241,7 +274,8 @@ tweedledee endp
 ; Clobbers: Nothing
 tweedledum proc
 tweedledum_loop:
-	call DumpRegs
+	mov dx, offset tweedledum_msg
+	call print_line
 	pusha
 	; Pause a second
 	mov cx, 0Fh
@@ -253,30 +287,50 @@ tweedledum_loop:
 	jmp tweedledum_loop
 tweedledum endp
 
-; Function: Prints out a null-terminated string to the screen
-; Receives: DX (which must hold an offset)
-;  Returns: Nothing
+
+
+; Function: Prints the ASCII string of a byte array, plus a newline (\r\n), to the screen in green via BIOS
+; Receives: DX
 ; Requires: Nothing
+;  Returns: Nothing
 ; Clobbers: Nothing
-print_string proc	
+print_line proc
 	pusha
+
+	mov si, 0
 	mov bx, dx
-	
-L1:							;Loop through each character of string	
-	cmp al, 0 				;Check to see if character is null-terminator
-	jne outputString
-	je endloop
-outputString:
-	mov al, [bx]	
-	mov ah, 0eh				;output the character of the string
-	int 10h
-	inc bx					;increment bx register to next character in string
 
-jmp L1
+	printloop:
+		mov al, [bx + si] ; put the next piece of the array into AL
+		cmp al, 0
+		jz endprint
+		mov ah, 0Eh   ; 0Eh in BIOS means print character 
+		push bx
+		mov bl, 0010b ; Set foreground color to green
+		int 10h		  ; BIOS interrupt
+		pop bx
+		inc si
+		jmp printloop
+	endprint:
+		mov  ax, 0e0dh
+		int  10h
+		mov  al, 0ah
+		int  10h
+		popa
+		ret
+print_line endp
 
-	endloop:
-	popa
+
+
+; Description: Reads a character from keyboard input
+; Receives:    ASCII char via BIOS
+; Requires:    Nothing
+; Returns:     ASCII char in AL
+; Clobbers:    AL, AH
+read_char proc
+	mov ah, 10h ; read keypress
+	int 16h     ; keyboard interrupt
 	ret
-print_string endp
+read_char endp
 
 end main

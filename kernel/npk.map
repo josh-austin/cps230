@@ -1,14 +1,8 @@
 JWlink Version 1.9beta 13
 Portions Copyright (c) 1985-2002 Sybase, Inc. All Rights Reserved.
-<<<<<<< HEAD
-Created on:       14/05/02 13:12:31
-Executable Image: bldr.exe
-creating a DOS executable
-=======
-Created on:       14/05/02 08:55:52
-Executable Image: bldr.bin
+Created on:       14/05/02 03:43:18
+Executable Image: npk.bin
 creating a RAW Binary Image executable
->>>>>>> 918e3cbe278468b667db195f80b4c19d720a571c
 
 
                         +------------+
@@ -18,7 +12,7 @@ creating a RAW Binary Image executable
 Group                           Address              Size
 =====                           =======              ====
 
-DGROUP                          00000000             00007e00
+DGROUP                          00000000             000016c0
 
 
 
@@ -29,8 +23,9 @@ DGROUP                          00000000             00007e00
 Segment                Class          Group          Address         Size
 =======                =====          =====          =======         ====
 
-_TEXT                  CODE           DGROUP         00000000        00007e00
-_DATA                  DATA           DGROUP         00007e00        00000000
+_TEXT                  CODE           DGROUP         00000000        00000715
+_DATA                  DATA           DGROUP         00000716        00000000
+STACK                  STACK          DGROUP         00000720        00000fa0
 
 
                         +----------------+
@@ -43,17 +38,22 @@ _DATA                  DATA           DGROUP         00007e00        00000000
 Address        Symbol
 =======        ======
 
-Module: bldr.obj(bldr.asm)
-00007c00*      main
-00007c48*      print_line
-Warning! W1014: stack segment not found
+Module: npkb.obj(npkb.asm)
+00000536*      main
+00000578*      npk_register
+000005fb*      npk_yield
+0000069d*      npk_start
+000006c0*      tweedledee
+000006d7*      tweedledum
+000006ee*      print_line
+00000710*      read_char
 
 
                         +-----------------------+
                         |   Linker Statistics   |
                         +-----------------------+
 
-Stack size:  1000 (4096.)
-Memory size:  7e00 (32256.)
-Entry point address: 00007c00
+Stack size:  0fa0 (4000.)
+Memory size:  16c0 (5824.)
+Entry point address: 00000536
 Link time: 00:00.16
