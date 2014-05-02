@@ -12,18 +12,22 @@ main proc
 	call print_string
 	mov ah, 02
 	mov ch, 0
+	mov cl, 2
 	mov dh, 0
 	mov dl, 0
-	mov al, 40
-	mov ax, 0800h
-	mov es, ax
-	mov bx, 0000h
+	mov al, 39
+	
+	;mov es, ax
 	
 	int 13h
 	
-	jmp Past_it_all
+	pushw 0800h
+	pushw 0000h
+	retf
 
 main endp
+
+jmp Past_it_all
 
 mystring byte "Booting...", 0dh, 0ah, 0
 
