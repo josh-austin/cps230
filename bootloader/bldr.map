@@ -1,6 +1,6 @@
 JWlink Version 1.9beta 13
 Portions Copyright (c) 1985-2002 Sybase, Inc. All Rights Reserved.
-Created on:       14/05/02 13:28:52
+Created on:       14/05/02 14:02:28
 Executable Image: bldr.exe
 creating a DOS executable
 
@@ -12,7 +12,7 @@ creating a DOS executable
 Group                           Address              Size
 =====                           =======              ====
 
-DGROUP                          0000:0000            00007e00
+DGROUP                          0000:0000            00007c68
 
 
 
@@ -23,8 +23,8 @@ DGROUP                          0000:0000            00007e00
 Segment                Class          Group          Address         Size
 =======                =====          =====          =======         ====
 
-_TEXT                  CODE           DGROUP         0000:0000       00007e00
-_DATA                  DATA           DGROUP         07e0:0000       00000000
+_TEXT                  CODE           DGROUP         0000:0000       00007c67
+_DATA                  DATA           DGROUP         07c6:0008       00000000
 
 
                         +----------------+
@@ -51,6 +51,6 @@ Warning! W1014: stack segment not found
                         +-----------------------+
 
 Stack size:  1000 (4096.)
-Memory size:  7e00 (32256.)
+Memory size:  7c68 (31848.)
 Entry point address: 0000:7c00
 Link time: 00:00.00

@@ -6,7 +6,7 @@ org 7c00h			; code here starts at offset 7c00h
 main proc
 	mov ax, cs
 	mov ss, ax
-	mov sp, 0
+	;mov sp, 0
 	mov ds, ax
 	mov dx, offset mystring
 	call print_line
@@ -29,13 +29,17 @@ main proc
 	call print_line
 happy:
 	
+	
+	
 	pushw 0800h
 	pushw 0000h
 	retf
+	
+jmp Past_it_all
 
 main endp
 
-jmp Past_it_all
+
 
 mystring byte "Booting...", 0dh, 0ah, 0
 errmsg byte "Oops!", 0
@@ -74,7 +78,7 @@ print_line endp
 
 Past_it_all:
 	
-org main+510
-	byte 055h, 0aah
+;org main+510
+;	byte 055h, 0aah
 	
 end main

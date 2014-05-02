@@ -8,76 +8,78 @@ bldr.asm
 00007C00                        main proc
 00007C00  8CC8                  	mov ax, cs
 00007C02  8ED0                  	mov ss, ax
-00007C04  BC0000                	mov sp, 0
-00007C07  8ED8                  	mov ds, ax
-00007C09  BA357C                	mov dx, offset mystring
-00007C0C  E83900                	call print_line
-00007C0F  B402                  	mov ah, 02h
-00007C11  B500                  	mov ch, 0
-00007C13  B102                  	mov cl, 2
-00007C15  B028                  	mov al, 40
+                                	;mov sp, 0
+00007C04  8ED8                  	mov ds, ax
+00007C06  BA327C                	mov dx, offset mystring
+00007C09  E83900                	call print_line
+00007C0C  B402                  	mov ah, 02h
+00007C0E  B500                  	mov ch, 0
+00007C10  B102                  	mov cl, 2
+00007C12  B028                  	mov al, 40
                                 	
-00007C17  BA0000                	mov dx, 0000h
-00007C1A  8EC2                  	mov es, dx
-00007C1C  B600                  	mov dh, 0
-00007C1E  B200                  	mov dl, 0
-00007C20  BB0008                	mov bx, 0800h
+00007C14  BA0000                	mov dx, 0000h
+00007C17  8EC2                  	mov es, dx
+00007C19  B600                  	mov dh, 0
+00007C1B  B200                  	mov dl, 0
+00007C1D  BB0008                	mov bx, 0800h
                                 	
-00007C23  CD13                  	int 13h
+00007C20  CD13                  	int 13h
                                 	; if CF flag is set, print error
                                 	
-00007C25  7306                  	jnc happy
-00007C27  BA427C                	mov dx, offset errmsg
-00007C2A  E81B00                	call print_line
-00007C2D                        happy:
+00007C22  7306                  	jnc happy
+00007C24  BA3F7C                	mov dx, offset errmsg
+00007C27  E81B00                	call print_line
+00007C2A                        happy:
                                 	
-00007C2D  680008                	pushw 0800h
-00007C30  6A00                  	pushw 0000h
-00007C32  CB                    	retf
+                                	
+                                	
+00007C2A  680008                	pushw 0800h
+00007C2D  6A00                  	pushw 0000h
+00007C2F  CB                    	retf
+00007C30  EB35                  jmp Past_it_all
+00007C32                        main endp
 
-00007C33                        main endp
 
-00007C33  EB35                  jmp Past_it_all
 
-00007C35  426F6F74696E672E2E    mystring byte "Booting...", 0dh, 0ah, 0
-00007C42  4F6F70732100          errmsg byte "Oops!", 0
+00007C32  426F6F74696E672E2E    mystring byte "Booting...", 0dh, 0ah, 0
+00007C3F  4F6F70732100          errmsg byte "Oops!", 0
 
                                 ; Function: Prints the ASCII string of a byte array, plus a newline (\r\n), to the screen in green via BIOS
                                 ; Receives: DX
                                 ; Requires: Nothing
                                 ;  Returns: Nothing
                                 ; Clobbers: Nothing
-00007C48                        print_line proc
-00007C48  60                    	pusha
+00007C45                        print_line proc
+00007C45  60                    	pusha
 
-00007C49  BE0000                	mov si, 0
+00007C46  BE0000                	mov si, 0
 
-00007C4C  8BDA                  	mov bx, dx
+00007C49  8BDA                  	mov bx, dx
 
-00007C4E                        	printloop:
-00007C4E  8A00                  		mov al, [bx + si] ; put the next piece of the array into AL
-00007C50  3C00                  		cmp al, 0
-00007C52  740B                  		jz endprint
-00007C54  B40E                  		mov ah, 0Eh   ; 0Eh in BIOS means print character 
-00007C56  53                    		push bx
-00007C57  B302                  		mov bl, 0010b ; Set foreground color to green
-00007C59  CD10                  		int 10h		  ; BIOS interrupt
-00007C5B  5B                    		pop bx
-00007C5C  46                    		inc si
-00007C5D  EBEF                  		jmp printloop
-00007C5F                        	endprint:
-00007C5F  B80D0E                		mov  ax, 0e0dh
-00007C62  CD10                  		int  10h
-00007C64  B00A                  		mov  al, 0ah
-00007C66  CD10                  		int  10h
-00007C68  61                    		popa
-00007C69                        		ret
-00007C6A                        print_line endp
+00007C4B                        	printloop:
+00007C4B  8A00                  		mov al, [bx + si] ; put the next piece of the array into AL
+00007C4D  3C00                  		cmp al, 0
+00007C4F  740B                  		jz endprint
+00007C51  B40E                  		mov ah, 0Eh   ; 0Eh in BIOS means print character 
+00007C53  53                    		push bx
+00007C54  B302                  		mov bl, 0010b ; Set foreground color to green
+00007C56  CD10                  		int 10h		  ; BIOS interrupt
+00007C58  5B                    		pop bx
+00007C59  46                    		inc si
+00007C5A  EBEF                  		jmp printloop
+00007C5C                        	endprint:
+00007C5C  B80D0E                		mov  ax, 0e0dh
+00007C5F  CD10                  		int  10h
+00007C61  B00A                  		mov  al, 0ah
+00007C63  CD10                  		int  10h
+00007C65  61                    		popa
+00007C66                        		ret
+00007C67                        print_line endp
 
-00007C6A                        Past_it_all:
+00007C67                        Past_it_all:
                                 	
-                                org main+510
-00007DFE  55AA                  	byte 055h, 0aah
+                                ;org main+510
+                                ;	byte 055h, 0aah
                                 	
                                 end main
 
@@ -100,7 +102,7 @@ Segments and Groups:
 $$SYMBOLS  . . . . . . . . . . .        32 Bit   000000E8 Byte    Private 'DEBSYM'
 $$TYPES  . . . . . . . . . . . .        32 Bit   00000048 Byte    Private 'DEBTYP'
 DGROUP . . . . . . . . . . . . .        GROUP
-_TEXT  . . . . . . . . . . . . .        16 Bit   7E00     Word    Public  'CODE'
+_TEXT  . . . . . . . . . . . . .        16 Bit   7C67     Word    Public  'CODE'
 _DATA  . . . . . . . . . . . . .        16 Bit   0000     Word    Public  'DATA'
 
 
@@ -108,8 +110,8 @@ Procedures, parameters and locals:
 
                 N a m e                 Type     Value    Segment  Length
 
-main . . . . . . . . . . . . . .        P Near   7C00     _TEXT    0033 Private  
-print_line . . . . . . . . . . .        P Near   7C48     _TEXT    0022 Private  
+main . . . . . . . . . . . . . .        P Near   7C00     _TEXT    0032 Private  
+print_line . . . . . . . . . . .        P Near   7C45     _TEXT    0022 Private  
 
 
 Symbols:
@@ -123,11 +125,11 @@ Symbols:
 @code  . . . . . . . . . . . . .        Text   _TEXT
 @data  . . . . . . . . . . . . .        Text   DGROUP
 @stack . . . . . . . . . . . . .        Text   DGROUP
-Past_it_all  . . . . . . . . . .        L Near          7C6Ah _TEXT 
-endprint . . . . . . . . . . . .        L Near          7C5Fh _TEXT 
-errmsg . . . . . . . . . . . . .        Byte[6]         7C42h _TEXT 
-happy  . . . . . . . . . . . . .        L Near          7C2Dh _TEXT 
-mystring . . . . . . . . . . . .        Byte[13]        7C35h _TEXT 
-printloop  . . . . . . . . . . .        L Near          7C4Eh _TEXT 
+Past_it_all  . . . . . . . . . .        L Near          7C67h _TEXT 
+endprint . . . . . . . . . . . .        L Near          7C5Ch _TEXT 
+errmsg . . . . . . . . . . . . .        Byte[6]         7C3Fh _TEXT 
+happy  . . . . . . . . . . . . .        L Near          7C2Ah _TEXT 
+mystring . . . . . . . . . . . .        Byte[13]        7C32h _TEXT 
+printloop  . . . . . . . . . . .        L Near          7C4Bh _TEXT 
 
-bldr.asm: 80 lines, 2 passes, 15 ms, 0 warnings, 0 errors
+bldr.asm: 82 lines, 2 passes, 0 ms, 0 warnings, 0 errors
