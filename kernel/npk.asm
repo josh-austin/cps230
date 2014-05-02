@@ -1,89 +1,118 @@
 TITLE Non-Preemptive Kernel (npk.asm)
+
 include irvine16.inc
-;include strings.inc
 
 .data
-number_registered byte 0
-cabinet_drawer byte 0
-cabinet  dword 256 dup(0) 
-temp_ebx dword ?
-temp_eax dword ?
-low_stack_section word 0FFFFh
 
-offset_eax equ 0
-offset_ebx equ 4
-offset_ecx equ 8
-offset_edx equ 12
-offset_esp equ 16
-offset_flags equ 20
+offset_eax			equ		0
+offset_ebx			equ		4
+offset_ecx			equ		8
+offset_edx			equ		12
+offset_esp			equ		16
+offset_flags		equ		20
+number_registered	word	0
+cabinet_drawer		byte	0
+cabinet				dword	256 dup(0)
+registered			word	20 dup(0)
+placeholder			word	0
+greeting			byte	"The Cheshire Non-Preemptive Cat", 0
+authors				byte	"by Cameron Thacker, Ashley Lane, Josh Austin"
+tweedledee_msg		byte	"TWEEDLE DEE: The time has come, the Walrus said...", 0
+tweedledum_msg		byte	"TWEEDLE DUM: Why, sometimes I've believed as many as six impossible things before breakfast.", 0
 
 .code
 
-tweedledee proc
-	call DumpRegs
-	pusha
-	; Pause a second
-	mov cx, 0Fh
-	mov dx, 4240h
-	mov ah, 86h
-	int 15h
-	popa
-	call npk_yield
-tweedledee endp
-
-tweedledum proc
-	call DumpRegs
-	pusha
-	; Pause a second
-	mov cx, 0Fh
-	mov dx, 4240h
-	mov ah, 86h
-	int 15h
-	popa
-	call npk_yield
-tweedledum endp
-
 main proc
+	; DOS only: register the data segment since we're not in Wonderland yet
 	mov ax, @data
 	mov ds, ax
-
+	
+	; register tweedledee and tweedledum
 	mov ebx, 0deadbeefh
 	mov eax, offset tweedledee
 	call npk_register
 	
-	mov ebx, 0abadfeedh
+	mov ebx, 0feedabeeh
 	mov eax, offset tweedledum
 	call npk_register
 	
-	mov ebx, 0
-	mov edx, 0
-	
-	mov ebx, [offset cabinet]
-	mov ebx, [bx + offset_ebx]
-	
-	mov ebx, [offset cabinet]
-	mov ebx, [bx + 40 + offset_ebx]
-	
+	; let the looping begin!
 	call npk_start
+	
+	; No termination code since our NPK will be in an eternal loop  ;-)
 
 main endp
 
 
-npk_start proc
-	; TODO: point to first context's stack pointer offset
-	; Load the first context cabinet into the registers and flags and start runnin'!
-	mov bx, offset cabinet
-	mov eax, [bx + offset_flags]
+; Function: Registers a function and context into the cabinet
+; Receives: task address in AX
+; Requires: Nothing
+;  Returns: Nothing
+; Clobbers: Nothing
+npk_register proc
+	pushad
+	pushfd
+	; STEP 1: point to the correct offset and then increment number_registered
+	; (after registering ax into the array of registered function addresses)
+	
+	push ebx
+	movzx ebx, [number_registered]
+	;call DumpRegs
+	add bx, [number_registered] ; number_registered is added twice since it is 2 bytes long (a "word")
+	mov [registered + bx], ax 
+	pop ebx
+	
 	push eax
-	popfd
-	mov eax, [bx + offset_eax]
-	mov ecx, [bx + offset_ecx]
-	mov edx, [bx + offset_edx]
-	mov esp, [bx + offset_esp]
-	mov ebx, [bx + offset_ebx]
-	push esp
-	ret
-npk_start endp
+	push ebx
+	mov eax, 0
+	mov ebx, 0
+	
+	movzx eax, [number_registered]
+	mov bl, 40
+	mul bl
+	add ax, offset cabinet
+	mov ebx, eax
+	
+	movzx eax, [number_registered]
+	inc ax
+	mov [number_registered], ax
+	
+	; STEP 2:
+    ; Registration!
+    pop eax
+	mov [bx + offset_ebx], eax
+    pop eax	
+    mov [bx + offset_eax], eax
+    mov [bx + offset_ecx], ecx
+    mov [bx + offset_edx], edx	
+	pop eax
+	mov [bx + offset_flags], eax
+	mov [placeholder], bx
+	
+	; STEP 3:
+    ; Subtract from the stack section in increments of 256 as necessary
+	mov ax, bx
+    mov bx, 0FFFFh
+	movzx ecx, [number_registered]
+	inc ecx
+	
+stack_pointy_loop:	
+    sub bx, 100h
+	loop stack_pointy_loop
+	
+	; Finally, register ESP with the current task stack section
+	push eax
+	mov eax, ss:[bx]
+	mov bx, [placeholder]
+    mov [bx + offset_esp], eax
+	pop eax
+	
+	
+    popad
+    ret
+
+npk_register endp
+
 
 ; Function: Saves current context and swaps to the next "cabinet drawer" context
 ; Receives: Nothing
@@ -92,13 +121,8 @@ npk_start endp
 ; Clobbers: Nothing
 npk_yield proc
 
-	; TODO: point to correct stack pointer segment
-    
-	; STEP 1: Save the current context in the cabinet!
+	; STEP 1: Save registers and flags to the current cabinet drawer
 	pushfd
-	
-	sub esp, 4
-
 	push ebx
     push eax
 	
@@ -108,9 +132,8 @@ npk_yield proc
 	mov al, [cabinet_drawer]
 	mov bl, 40
 	mul bl
-	movzx bx, al
+	mov bx, ax
 	add bx, offset cabinet
-	
 	
     mov [bx + offset_esp], esp
 	pop eax
@@ -123,24 +146,17 @@ npk_yield proc
 	pop eax
 	mov [bx + offset_flags], eax
 	
-    ; STEP 2: increment to the next cabinet_drawer unless we are at number_registered, in which case we go back to the first
+	; STEP 2: Unload the next cabinet drawer into the registers and flags
     mov eax, 0
 	mov al, [cabinet_drawer]
 	inc al
-	cmp al, [number_registered]
+	cmp ax, [number_registered]
 	jne J1
 	mov al, 0
 
 J1:
 	; ...and then use the cabinet_drawer number to dynamically point at the cabinet offset
 	mov [cabinet_drawer], al
-	mov ebx, 0
-	mov bl, 40
-	mul bl
-	mov bx, ax
-	
-	mov bx, offset cabinet
-	add bx, ax
 	
 
     ; STEP 3: Unload the context from the cabinet based on a multiple of cabinet_drawer
@@ -159,85 +175,108 @@ J2:
 	pushd eax
 	popfd
 	
-	mov eax, 0
-	mov eax, [bx + offset_ebx]
-	mov [temp_ebx], eax
-	
 	mov eax, [bx + offset_eax]
 	mov ecx, [bx + offset_ecx]
 	mov edx, [bx + offset_edx]
 	mov esp, [bx + offset_esp]
-	mov ebx, [temp_ebx]
-	
-    ; STEP 4:
-    ; Put the ESP, which is the return addr of the next function we want to run, and push it to the top of the stack...
-    push esp
-	ret ; ...and then this will start the next function
+	mov ebx, [bx + offset_ebx]
+
+	; STEP 3: Go to the next function	
+	mov [placeholder], bx
+	movzx bx, [cabinet_drawer]
+	add bx, bx ; added because offsets are 2 bytes (a "word")
+	push [registered + bx]
+	mov bx, [placeholder]
+	ret
+
 
 npk_yield endp
 
 
-; Function: Registers a function and context into the cabinet
-; Receives: task address in AX
+; Function: Starts the happiness
+; Receives: Nothing
 ; Requires: Nothing
 ;  Returns: Nothing
 ; Clobbers: Nothing
-npk_register proc
-	pushad
-	pushfd
-
-	; STEP 1: point to the correct offset and then increment number_registered
+npk_start proc
+	; Load the first context cabinet into the registers and flags and start runnin'!
+	mov bx, offset cabinet
+	mov eax, [bx + offset_flags]
 	push eax
-	push ebx
-	mov [temp_ebx], ebx
-	mov eax, 0
-	mov ebx, 0
-	mov al, [number_registered]
-	mov bl, 40
-	mul bl
-	add ax, offset cabinet
-	mov bx, ax
-	
-	
-	mov al, [number_registered]
-	inc al
-	mov [number_registered], al
-	
-	; STEP 2:
-    ; Registration!
-    pop eax
-	mov [bx + offset_ebx], eax
-	;call DumpRegs
-    pop eax	
-    mov [bx + offset_eax], eax
-    mov [bx + offset_ecx], ecx
-    mov [bx + offset_edx], edx
-	mov [bx + offset_esp], esp
-	
-	pop eax
-	mov [bx + offset_flags], eax
-    
-	; STEP 3:
-    ; Subtract 100h from low_stack_section
-    movzx ebx, [low_stack_section]
-    sub ebx, 100h
-	
-	; Pointy, pointy!
-    mov [low_stack_section], bx
-	mov eax, 0
-    mov ss:[bx], ax
-	
-	mov ax, sizeof cabinet
-	add ebx, eax
-    mov [ebx + offset_esp], ebx
-	
-	mov [temp_ebx], ebx
-	
-    popad
-    ret
-
-npk_register endp
+	popfd
+	mov eax, [bx + offset_eax]
+	mov ecx, [bx + offset_ecx]
+	mov edx, [bx + offset_edx]
+	mov esp, [bx + offset_esp]
+	mov ebx, [bx + offset_ebx]
+	push [registered]
+	ret
+npk_start endp
 
 
+; Function: Just a dumb loop with a reference to Alice in Wonderland
+; Receives: Nothing
+; Requires: Nothing
+;  Returns: Nothing
+; Clobbers: Nothing
+tweedledee proc
+tweedledee_loop:
+	call DumpRegs
+	pusha
+	; Pause a second
+	mov cx, 0Fh
+	mov dx, 4240h
+	mov ah, 86h
+	int 15h
+	popa
+	call npk_yield
+	jmp tweedledee_loop
+tweedledee endp
+
+
+; Function: Just another dumb loop with a reference to Alice in Wonderland
+; Receives: Nothing
+; Requires: Nothing
+;  Returns: Nothing
+; Clobbers: Nothing
+tweedledum proc
+tweedledum_loop:
+	call DumpRegs
+	pusha
+	; Pause a second
+	mov cx, 0Fh
+	mov dx, 4240h
+	mov ah, 86h
+	int 15h
+	popa
+	call npk_yield
+	jmp tweedledum_loop
+tweedledum endp
+
+; Function: Prints out a null-terminated string to the screen
+; Receives: DX (which must hold an offset)
+;  Returns: Nothing
+; Requires: Nothing
+; Clobbers: Nothing
+print_string proc	
+	pusha
+	mov bx, dx
+	
+L1:							;Loop through each character of string	
+	cmp al, 0 				;Check to see if character is null-terminator
+	jne outputString
+	je endloop
+outputString:
+	mov al, [bx]	
+	mov ah, 0eh				;output the character of the string
+	int 10h
+	inc bx					;increment bx register to next character in string
+
+jmp L1
+
+	endloop:
+	popa
+	ret
+print_string endp
 
 end main
