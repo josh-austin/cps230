@@ -8,15 +8,9 @@ main proc
 	mov ss, ax
 	mov sp, 0
 	mov ds, ax
-<<<<<<< HEAD
-	;mov dx, offset mystring
-	;call print_string
-	mov ah, 02
-=======
 	mov dx, offset mystring
 	call print_line
 	mov ah, 02h
->>>>>>> 918e3cbe278468b667db195f80b4c19d720a571c
 	mov ch, 0
 	mov cl, 2
 	mov al, 40
@@ -35,34 +29,16 @@ main proc
 	call print_line
 happy:
 	
-<<<<<<< HEAD
-	jc all_good
-	mov dx, offset errorstr
-	call print_string
-	jmp Past_it_all
-all_good:
-	
 	pushw 0800h
 	pushw 0000h
 	retf
-	
-	jmp Past_it_all
-=======
-	pushw 0800h
-	pushw 0000h
-	retf
->>>>>>> 918e3cbe278468b667db195f80b4c19d720a571c
 
 main endp
 
 jmp Past_it_all
 
 mystring byte "Booting...", 0dh, 0ah, 0
-<<<<<<< HEAD
-errorstr byte "Something went wrong...", 0
-=======
 errmsg byte "Oops!", 0
->>>>>>> 918e3cbe278468b667db195f80b4c19d720a571c
 
 ; Function: Prints the ASCII string of a byte array, plus a newline (\r\n), to the screen in green via BIOS
 ; Receives: DX
@@ -71,11 +47,9 @@ errmsg byte "Oops!", 0
 ; Clobbers: Nothing
 print_line proc
 	pusha
-<<<<<<< HEAD
-=======
 
 	mov si, 0
->>>>>>> 918e3cbe278468b667db195f80b4c19d720a571c
+
 	mov bx, dx
 
 	printloop:

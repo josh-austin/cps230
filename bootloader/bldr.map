@@ -1,14 +1,8 @@
 JWlink Version 1.9beta 13
 Portions Copyright (c) 1985-2002 Sybase, Inc. All Rights Reserved.
-<<<<<<< HEAD
-Created on:       14/05/02 13:12:31
+Created on:       14/05/02 13:28:52
 Executable Image: bldr.exe
 creating a DOS executable
-=======
-Created on:       14/05/02 08:55:52
-Executable Image: bldr.bin
-creating a RAW Binary Image executable
->>>>>>> 918e3cbe278468b667db195f80b4c19d720a571c
 
 
                         +------------+
@@ -18,7 +12,7 @@ creating a RAW Binary Image executable
 Group                           Address              Size
 =====                           =======              ====
 
-DGROUP                          00000000             00007e00
+DGROUP                          0000:0000            00007e00
 
 
 
@@ -29,8 +23,8 @@ DGROUP                          00000000             00007e00
 Segment                Class          Group          Address         Size
 =======                =====          =====          =======         ====
 
-_TEXT                  CODE           DGROUP         00000000        00007e00
-_DATA                  DATA           DGROUP         00007e00        00000000
+_TEXT                  CODE           DGROUP         0000:0000       00007e00
+_DATA                  DATA           DGROUP         07e0:0000       00000000
 
 
                         +----------------+
@@ -43,10 +37,13 @@ _DATA                  DATA           DGROUP         00007e00        00000000
 Address        Symbol
 =======        ======
 
-Module: bldr.obj(bldr.asm)
-00007c00*      main
-00007c48*      print_line
 Warning! W1014: stack segment not found
+
+
+                        +--------------------+
+                        |   Libraries Used   |
+                        +--------------------+
+
 
 
                         +-----------------------+
@@ -55,5 +52,5 @@ Warning! W1014: stack segment not found
 
 Stack size:  1000 (4096.)
 Memory size:  7e00 (32256.)
-Entry point address: 00007c00
-Link time: 00:00.16
+Entry point address: 0000:7c00
+Link time: 00:00.00

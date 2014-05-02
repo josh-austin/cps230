@@ -1,6 +1,5 @@
 JWasm v2.11, Oct 20 2013
 bldr.asm
-                                ;include irvine16.inc
                                 .model tiny
                                 .386
                                 .code
@@ -9,66 +8,6 @@ bldr.asm
 00007C00                        main proc
 00007C00  8CC8                  	mov ax, cs
 00007C02  8ED0                  	mov ss, ax
-<<<<<<< HEAD
-00007C04  8ED8                  	mov ds, ax
-                                	;mov dx, offset mystring
-                                	;call print_string
-00007C06  B402                  	mov ah, 02
-00007C08  B500                  	mov ch, 0
-00007C0A  B600                  	mov dh, 0
-00007C0C  B200                  	mov dl, 0
-00007C0E  B028                  	mov al, 40
-00007C10  B80008                	mov ax, 0800h
-00007C13  8EC0                  	mov es, ax
-00007C15  BB0000                	mov bx, 0000h
-                                	
-00007C18  CD13                  	int 13h
-                                	
-00007C1A  7208                  	jc all_good
-00007C1C  BA397C                	mov dx, offset errorstr
-00007C1F  E82F00                	call print_string
-00007C22  EB41                  	jmp Past_it_all
-00007C24                        all_good:
-                                	
-00007C24  680008                	pushw 0800h
-00007C27  6A00                  	pushw 0000h
-00007C29  CB                    	retf
-                                	
-00007C2A  EB39                  	jmp Past_it_all
-
-00007C2C                        main endp
-
-00007C2C  426F6F74696E672E2E    mystring byte "Booting...", 0dh, 0ah, 0
-00007C39  536F6D657468696E67    errorstr byte "Something went wrong...", 0
-
-                                ; Function: Prints out a null-terminated string to the screen
-                                ; Receives: bx register (which must hold "mystring" stored in memory)
-                                ;  Returns: A null-terminated string displayed on the string
-                                ; Requires: nothing
-                                ; Clobbers: nothing
-00007C51                        print_string proc	
-00007C51  60                    	pusha
-00007C52  8BDA                  	mov bx, dx
-                                	
-00007C54                        L1:							;Loop through each character of string	
-00007C54  3C00                  	cmp al, 0 				;Check to see if character is null-terminator
-00007C56  7502                  	jne outputString
-00007C58  7409                  	je endloop
-00007C5A                        outputString:
-00007C5A  8A07                  	mov al, [bx]	
-00007C5C  B40E                  	mov ah, 0eh				;output the character of the string
-00007C5E  CD10                  	int 10h
-00007C60  43                    	inc bx					;increment bx register to next character in string
-
-00007C61  EBF1                  jmp L1
-
-00007C63                        	endloop:
-00007C63  61                    	popa
-00007C64                        	ret
-00007C65                        print_string endp
-
-00007C65                        Past_it_all:
-=======
 00007C04  BC0000                	mov sp, 0
 00007C07  8ED8                  	mov ds, ax
 00007C09  BA357C                	mov dx, offset mystring
@@ -112,6 +51,7 @@ bldr.asm
 00007C48  60                    	pusha
 
 00007C49  BE0000                	mov si, 0
+
 00007C4C  8BDA                  	mov bx, dx
 
 00007C4E                        	printloop:
@@ -135,7 +75,6 @@ bldr.asm
 00007C6A                        print_line endp
 
 00007C6A                        Past_it_all:
->>>>>>> 918e3cbe278468b667db195f80b4c19d720a571c
                                 	
                                 org main+510
 00007DFE  55AA                  	byte 055h, 0aah
@@ -158,11 +97,8 @@ Segments and Groups:
 
                 N a m e                 Size     Length   Align   Combine Class
 
-<<<<<<< HEAD
-$$SYMBOLS  . . . . . . . . . . .        32 Bit   000000FD Byte    Private 'DEBSYM'
+$$SYMBOLS  . . . . . . . . . . .        32 Bit   000000E8 Byte    Private 'DEBSYM'
 $$TYPES  . . . . . . . . . . . .        32 Bit   00000048 Byte    Private 'DEBTYP'
-=======
->>>>>>> 918e3cbe278468b667db195f80b4c19d720a571c
 DGROUP . . . . . . . . . . . . .        GROUP
 _TEXT  . . . . . . . . . . . . .        16 Bit   7E00     Word    Public  'CODE'
 _DATA  . . . . . . . . . . . . .        16 Bit   0000     Word    Public  'DATA'
@@ -172,16 +108,8 @@ Procedures, parameters and locals:
 
                 N a m e                 Type     Value    Segment  Length
 
-<<<<<<< HEAD
-main . . . . . . . . . . . . . .        P Near   7C00     _TEXT    002C Private  
-print_string . . . . . . . . . .        P Near   7C51     _TEXT    0014 Private  
-=======
-main . . . . . . . . . . . . . .        P Near   7C00     _TEXT    0033 Public   
-  happy  . . . . . . . . . . . .        L Near   7C2D     _TEXT
-print_line . . . . . . . . . . .        P Near   7C48     _TEXT    0022 Public   
-  endprint . . . . . . . . . . .        L Near   7C5F     _TEXT
-  printloop  . . . . . . . . . .        L Near   7C4E     _TEXT
->>>>>>> 918e3cbe278468b667db195f80b4c19d720a571c
+main . . . . . . . . . . . . . .        P Near   7C00     _TEXT    0033 Private  
+print_line . . . . . . . . . . .        P Near   7C48     _TEXT    0022 Private  
 
 
 Symbols:
@@ -195,20 +123,11 @@ Symbols:
 @code  . . . . . . . . . . . . .        Text   _TEXT
 @data  . . . . . . . . . . . . .        Text   DGROUP
 @stack . . . . . . . . . . . . .        Text   DGROUP
-<<<<<<< HEAD
-L1 . . . . . . . . . . . . . . .        L Near          7C54h _TEXT 
-Past_it_all  . . . . . . . . . .        L Near          7C65h _TEXT 
-all_good . . . . . . . . . . . .        L Near          7C24h _TEXT 
-endloop  . . . . . . . . . . . .        L Near          7C63h _TEXT 
-errorstr . . . . . . . . . . . .        Byte[24]        7C39h _TEXT 
-mystring . . . . . . . . . . . .        Byte[13]        7C2Ch _TEXT 
-outputString . . . . . . . . . .        L Near          7C5Ah _TEXT 
-
-bldr.asm: 72 lines, 2 passes, 15 ms, 0 warnings, 0 errors
-=======
 Past_it_all  . . . . . . . . . .        L Near          7C6Ah _TEXT 
+endprint . . . . . . . . . . . .        L Near          7C5Fh _TEXT 
 errmsg . . . . . . . . . . . . .        Byte[6]         7C42h _TEXT 
+happy  . . . . . . . . . . . . .        L Near          7C2Dh _TEXT 
 mystring . . . . . . . . . . . .        Byte[13]        7C35h _TEXT 
+printloop  . . . . . . . . . . .        L Near          7C4Eh _TEXT 
 
-bldr.asm: 80 lines, 2 passes, 0 ms, 0 warnings, 0 errors
->>>>>>> 918e3cbe278468b667db195f80b4c19d720a571c
+bldr.asm: 80 lines, 2 passes, 15 ms, 0 warnings, 0 errors
