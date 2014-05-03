@@ -21,14 +21,9 @@ npkb.asm
 00000006  BC0000                	mov sp, 0
 
                                 	; Activate VGA (640x480) mode
-                                	;mov ah, 00h
-                                	;mov al, 12h
-                                	;int 10h
-                                	
-
-                                	; greet the user and anticipate a keypress
-00000009  BA7204                	mov dx, offset greeting
-0000000C  E8DF06                	call print_line
+00000009  B400                  	mov ah, 00h
+0000000B  B012                  	mov al, 12h
+0000000D  CD10                  	int 10h
                                 	
                                 	; register tweedledee and tweedledum
 0000000F  66BBEFBEADDE          	mov ebx, 0deadbeefh
@@ -414,4 +409,4 @@ registered . . . . . . . . . . .        Word[20]         448h _TEXT
 tweedledee_msg . . . . . . . . .        Byte[51]         4E8h _TEXT 
 tweedledum_msg . . . . . . . . .        Byte[93]         51Bh _TEXT 
 
-npkb.asm: 343 lines, 2 passes, 0 ms, 0 warnings, 0 errors
+npkb.asm: 338 lines, 2 passes, 0 ms, 0 warnings, 0 errors

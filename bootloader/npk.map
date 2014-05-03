@@ -1,6 +1,6 @@
 JWlink Version 1.9beta 13
 Portions Copyright (c) 1985-2002 Sybase, Inc. All Rights Reserved.
-Created on:       14/05/02 08:55:53
+Created on:       14/05/02 18:46:31
 Executable Image: npk.bin
 creating a RAW Binary Image executable
 
@@ -56,4 +56,4 @@ Warning! W1014: stack segment not found
 Stack size:  1000 (4096.)
 Memory size:  0716 (1814.)
 Entry point address: 00000000
-Link time: 00:00.16
+Link time: 00:00.00

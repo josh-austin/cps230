@@ -19,14 +19,9 @@ main proc
 	mov sp, 0
 
 	; Activate VGA (640x480) mode
-	;mov ah, 00h
-	;mov al, 12h
-	;int 10h
-	
-
-	; greet the user and anticipate a keypress
-	mov dx, offset greeting
-	call print_line
+	mov ah, 00h
+	mov al, 12h
+	int 10h
 	
 	; register tweedledee and tweedledum
 	mov ebx, 0deadbeefh
